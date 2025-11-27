@@ -1,14 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-interface Params {
-  params: { boardId: string };
-}
 
 // --------------------------------------------------
 // GET → Fetch a board with elements + documentation
 // --------------------------------------------------
-export async function GET(req: Request, { params }: Params) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { boardId: string } }
+) {
   const { boardId } = params;
 
   try {
@@ -20,7 +19,6 @@ export async function GET(req: Request, { params }: Params) {
       return NextResponse.json({ error: "Board not found" }, { status: 404 });
     }
 
-    // Extract stored Excalidraw data, default to empty values
     const excalidrawData = board.elements || {
       elements: [],
       appState: { collaborators: [] },
@@ -52,32 +50,21 @@ export async function GET(req: Request, { params }: Params) {
   }
 }
 
-
-
 // --------------------------------------------------
 // POST → Save elements + documentation
 // --------------------------------------------------
-export async function POST(req: Request, { params }: Params) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { boardId: string } }
+) {
   const { boardId } = params;
-
-  // console.log(boardId);
-  
 
   try {
     const body = await req.json();
-    // console.log("Incoming:", body);
-
     const data: any = {};
-    console.log(body);
-    
 
-    if ("elements" in body) {
-      data.elements = body;
-    }
-
-    if ("documentation" in body) {
-      data.documentation = body.documentation;
-    }
+    if ("elements" in body) data.elements = body;
+    if ("documentation" in body) data.documentation = body.documentation;
 
     const updated = await prisma.board.update({
       where: { id: boardId },
@@ -87,7 +74,9 @@ export async function POST(req: Request, { params }: Params) {
     return NextResponse.json({ success: true, updated });
   } catch (error) {
     console.error("Failed to save board:", error);
-    return NextResponse.json({ error: "Failed to save board" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to save board" },
+      { status: 500 }
+    );
   }
 }
-
