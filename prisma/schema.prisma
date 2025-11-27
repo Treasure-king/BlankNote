@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String         @id @default(cuid())
+  name           String?
+  email          String?        @unique
+  image          String?
+  boards         Board[]        @relation("UserBoards")
+  collaborations Collaborator[] @relation("UserCollaborations")
+  createdAt      DateTime       @default(now())
+}
+
+model Board {
+  id            String         @id @default(cuid())
+  title         String
+  ownerId       String
+  owner         User           @relation("UserBoards", fields: [ownerId], references: [id])
+  collaborators Collaborator[] @relation("BoardCollaborators")
+  elements      Json?
+  documentation Json?   // <-- ADD THIS
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+
+model Collaborator {
+  id        String   @id @default(cuid())
+  boardId   String
+  userId    String
+  role      Role     @default(VIEWER)
+  board     Board    @relation("BoardCollaborators", fields: [boardId], references: [id])
+  user      User     @relation("UserCollaborations", fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  OWNER
+  EDITOR
+  VIEWER
+}
