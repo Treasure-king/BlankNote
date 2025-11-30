@@ -1,61 +1,106 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { prisma } from "@/lib/prisma";
+import slugify from "slugify";
 
-// --------------------------------------------------
-// GET → List all boards of authenticated user
-// --------------------------------------------------
-export async function GET() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+// ---------------------------------------------------------------------
+// Generate Unique Slug
+// ---------------------------------------------------------------------
+async function generateUniqueSlug(title: string) {
+  const base = slugify(title, { lower: true, strict: true });
+  let slug = base;
+  let count = 1;
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  while (await prisma.board.findUnique({ where: { slug } })) {
+    slug = `${base}-${count++}`;
   }
 
+  return slug;
+}
+
+// ---------------------------------------------------------------------
+// Generate random publicId
+// ---------------------------------------------------------------------
+function generatePublicId() {
+  return Math.random().toString(36).substring(2, 10);
+}
+
+// =====================================================================
+// GET → Fetch all boards for authenticated user
+// =====================================================================
+export async function GET() {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const boards = await prisma.board.findMany({
       where: { ownerId: user.id },
       include: { collaborators: true },
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json(boards);
+    return NextResponse.json(boards, { status: 200 });
   } catch (error) {
-    console.error("Failed to fetch boards:", error);
+    console.error("GET /api/board error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch boards" },
+      { error: "Failed to load boards" },
       { status: 500 }
     );
   }
 }
 
-// --------------------------------------------------
-// POST → Create a new board
-// --------------------------------------------------
+// =====================================================================
+// POST → Create a board
+// =====================================================================
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
-    const { title } = await req.json();
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+
+    const {
+      title,
+      description,
+      category,
+      priority,
+      tags,
+      status,
+      dueDate,
+      color,
+      icon,
+      coverImage,
+      isPublic,
+    } = body;
+
+    // ------------------------------
+    // Validation
+    // ------------------------------
     if (!title || typeof title !== "string") {
       return NextResponse.json(
-        { error: "Invalid title" },
+        { error: "A valid title is required." },
         { status: 400 }
       );
     }
 
-    // Ensure user exists in Prisma
+    if (!category || typeof category !== "string") {
+      return NextResponse.json(
+        { error: "A valid category is required." },
+        { status: 400 }
+      );
+    }
+
+    // ------------------------------
+    // Ensure user exists locally
+    // ------------------------------
     await prisma.user.upsert({
       where: { id: user.id },
       update: {},
@@ -67,18 +112,43 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // ------------------------------
+    // Generate slug
+    // ------------------------------
+    const slug = await generateUniqueSlug(title);
+
+    // ------------------------------
+    // Create board
+    // ------------------------------
     const board = await prisma.board.create({
       data: {
         title,
+        description: description || null,
+        category,
+        priority: priority || "Medium",
+        status: status || "active",
+
+        tags: Array.isArray(tags) ? tags : [],
+
+        dueDate: dueDate ? new Date(dueDate) : null,
+
+        color: color || null,
+        icon: icon || null,
+        coverImage: coverImage || null,
+
+        slug,
+        isPublic: !!isPublic,
+        publicId: isPublic ? generatePublicId() : null,
+
         ownerId: user.id,
-        elements: null,
         documentation: null,
+        elements: null,
       },
     });
 
     return NextResponse.json(board, { status: 201 });
   } catch (error) {
-    console.error("Failed to create board:", error);
+    console.error("POST /api/board error:", error);
     return NextResponse.json(
       { error: "Failed to create board" },
       { status: 500 }

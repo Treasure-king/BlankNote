@@ -35,7 +35,7 @@ export default function ExcalidrawBoard({ boardId, initialData }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-50">
+    <div className="fixed inset-0 bg-gray-50 left-12">
       <Excalidraw
         initialData={normalizedData}
         onChange={(elements, appState, files) =>

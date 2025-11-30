@@ -12,47 +12,51 @@ interface ExcalidrawData {
 
 export default function BoardClient({ boardId }) {
   const editorRef = useRef(null);
-  const [initialExcalidraw, setInitialExcalidraw] = useState<ExcalidrawData | null>(null);
+  const [initialExcalidraw, setInitialExcalidraw] =
+    useState<ExcalidrawData | null>(null);
 
-useEffect(() => {
-  fetch(`/api/board/${boardId}`)
-    .then(res => res.json())
-    .then(board => {
-      // Load documentation
-      if (board.documentation && editorRef.current) {
-        editorRef.current.render(board.documentation);
-      }
+  useEffect(() => {
+    fetch(`/api/board/${boardId}`)
+      .then((res) => res.json())
+      .then((board) => {
+        if (board.documentation && editorRef.current) {
+          editorRef.current.render(board.documentation);
+        }
 
-      // Load Excalidraw
-      if (board.elements) {
-        const raw = board.elements; // this is the object stored in DB
-        setInitialExcalidraw({
-          elements: raw.elements || [],
-          appState: raw.appState || { collaborators: [] },
-          files: raw.files || {},
-        });
-      } else {
-        setInitialExcalidraw({
-          elements: [],
-          appState: { collaborators: [] },
-          files: {},
-        });
-      }
-    });
-}, [boardId]);
-
+        if (board.elements) {
+          const raw = board.elements;
+          setInitialExcalidraw({
+            elements: raw.elements || [],
+            appState: raw.appState || { collaborators: [] },
+            files: raw.files || {},
+          });
+        } else {
+          setInitialExcalidraw({
+            elements: [],
+            appState: { collaborators: [] },
+            files: {},
+          });
+        }
+      });
+  }, [boardId]);
 
   return (
-    <div className="w-full h-full text-black">
-      <DocumentationPanel boardId={boardId} editorRef={editorRef} />
+    <div className="w-full h-full flex flex-col lg:flex-row bg-white text-black overflow-hidden">
 
-      {/* Only mount Excalidraw when initial data is ready */}
-      {initialExcalidraw && (
-        <ExcalidrawBoard
-          boardId={boardId}
-          initialData={initialExcalidraw} // pass the full object, not just .elements
-        />
-      )}
+      {/* Documentation Panel */}
+      <div className="w-full lg:w-1/3 xl:w-1/4 h-auto lg:h-full border-r border-gray-200 overflow-hidden bg-[#09090B]">
+        <DocumentationPanel boardId={boardId} editorRef={editorRef} />
+      </div>
+
+      {/* Excalidraw Area */}
+      <div className="flex-1 w-full h-[70vh] lg:h-full">
+        {initialExcalidraw && (
+          <ExcalidrawBoard
+            boardId={boardId}
+            initialData={initialExcalidraw}
+          />
+        )}
+      </div>
     </div>
   );
 }

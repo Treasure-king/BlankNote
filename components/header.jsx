@@ -48,7 +48,7 @@ export default function Header() {
   const navLinks = [
     { href: '/', label: 'Home', title: 'Go to homepage' },
     { href: '/dashboard', label: 'Dashboard', title: 'View your dashboard' },
-    { href: '/editor', label: 'Editor', title: 'Open the text editor' },
+    { href: '/About', label: 'About', title: 'Open the text editor' },
   ]
 
   return (
