@@ -19,6 +19,7 @@ import {
   Tag,
   MoreHorizontal,
 } from "lucide-react";
+import Header from "@/components/Header";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -46,44 +47,51 @@ export default function DashboardPage() {
   // Delete
   // -------------------------------------------------
   const handleDelete = async (boardId: string) => {
-    if (!confirm("Delete this board permanently?")) return;
+    if (!confirm("Delete this project permanently?")) return;
 
     const res = await fetch(`/api/board/${boardId}`, { method: "DELETE" });
-    if (!res.ok) return alert("Failed to delete board.");
+    if (!res.ok) return alert("Failed to delete project.");
 
     setBoards((prev) => prev.filter((b) => b.id !== boardId));
   };
 
-  const navigateToBoard = (board: any) =>
-  {
-    console.log(board.id);
+  const navigateToBoard = (board: any) => {
     router.push(`/dashboard/${board.id}`);
-  }
+  };
 
   // Small helper for priority color badge
   const priorityColor = (p: string) => {
     switch (p?.toLowerCase()) {
       case "critical":
-        return "bg-red-500/15 text-red-600 border border-red-500/20";
+        return "bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-500/30";
       case "high":
-        return "bg-orange-500/15 text-orange-600 border border-orange-500/20";
+        return "bg-orange-100 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-500/30";
       case "medium":
-        return "bg-yellow-500/15 text-yellow-600 border border-yellow-500/20";
+        return "bg-yellow-100 text-yellow-700 border border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-500/30";
       case "low":
-        return "bg-green-500/15 text-green-600 border border-green-500/20";
+        return "bg-green-100 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-500/30";
       default:
-        return "bg-secondary text-secondary-foreground";
+        return "bg-gray-100 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600";
     }
   };
 
   return (
-    <div className="p-10">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Your Projects</h1>
 
-        <Button onClick={() => router.push("/dashboard/new")}>
-          <Plus className="w-4 h-4 mr-2 cursor-pointer"/> New Project
+    <>
+    <Header />
+    
+    <div className="p-6 md:p-10 bg-slate-50 dark:bg-slate-900 min-h-screen">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4 mt-16">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Your Projects
+        </h1>
+
+        <Button
+          onClick={() => router.push("/dashboard/new")}
+          className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 dark:bg-indigo-600 dark:hover:bg-indigo-700 transition-colors text-white cursor-pointer"
+        >
+          <Plus className="w-4 h-4" /> New Project
         </Button>
       </div>
 
@@ -91,11 +99,13 @@ export default function DashboardPage() {
       {errorMsg && <p className="text-red-500 mb-6">{errorMsg}</p>}
 
       {/* Loading */}
-      {loading && <p className="text-muted-foreground">Loading projects...</p>}
+      {loading && (
+        <p className="text-slate-500 dark:text-slate-400">Loading projects...</p>
+      )}
 
       {/* Empty State */}
       {!loading && boards.length === 0 && !errorMsg && (
-        <p className="text-muted-foreground">
+        <p className="text-slate-500 dark:text-slate-400">
           No projects yet. Create your first one!
         </p>
       )}
@@ -106,11 +116,11 @@ export default function DashboardPage() {
           {boards.map((board) => (
             <Card
               key={board.id}
-              className="group rounded-2xl overflow-hidden border hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer"
+              className="group rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:shadow-2xl hover:-translate-y-1 transition-all cursor-pointer bg-white dark:bg-slate-800"
             >
               {/* --- COVER AREA --- */}
               <div
-                className="relative h-32 w-full"
+                className="relative h-32 w-full cursor-pointer"
                 onClick={() => navigateToBoard(board)}
               >
                 {board.coverImage ? (
@@ -127,11 +137,11 @@ export default function DashboardPage() {
                 )}
 
                 {/* Overlay Gradient */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/60 opacity-80"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/40 dark:from-black/20 dark:to-black/60"></div>
 
                 {/* Icon badge */}
                 {board.icon && (
-                  <span className="absolute bottom-2 left-2 text-3xl bg-white/70 backdrop-blur-md rounded-xl px-2 py-1 shadow">
+                  <span className="absolute bottom-2 left-2 text-3xl bg-white dark:bg-slate-700/70 backdrop-blur-md rounded-xl px-2 py-1 shadow">
                     {board.icon}
                   </span>
                 )}
@@ -141,33 +151,29 @@ export default function DashboardPage() {
                   <DropdownMenuTrigger asChild>
                     <button
                       onClick={(e) => e.stopPropagation()}
-                      className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 text-white transition p-2 hover:bg-white hover:text-black rounded-full cursor-pointer"
+                      className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 text-slate-700 dark:text-slate-200 transition p-2 hover:bg-white/20 dark:hover:bg-white/10 rounded-full cursor-pointer"
                     >
                       <MoreHorizontal className="w-5 h-5 drop-shadow" />
                     </button>
                   </DropdownMenuTrigger>
 
-                  <DropdownMenuContent align="end" className="w-36 cursor-pointer" >
+                  <DropdownMenuContent align="end" className="w-36">
                     <DropdownMenuItem
-                      onClick={(e) =>
-                      {
-                        e.stopPropagation(); 
-                        router.push(`/dashboard/${board.id}/edit`)
-                      }
-                      }
-                      className="hover:bg-yellow-500! cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/dashboard/${board.id}/edit`);
+                      }}
+                      className="cursor-pointer"
                     >
                       Edit
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
-                      className="hover:bg-red-500! cursor-pointer"
-                      onClick={(e) => 
-                        {
-                          e.stopPropagation(); 
-                          handleDelete(board.id)
-                        }
-                      }
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(board.id);
+                      }}
+                      className="text-red-600 dark:text-red-400 cursor-pointer"
                     >
                       Delete
                     </DropdownMenuItem>
@@ -178,15 +184,14 @@ export default function DashboardPage() {
               {/* --- CONTENT AREA --- */}
               <CardHeader
                 onClick={() => navigateToBoard(board)}
-                className="pb-0 pt-4"
+                className="pb-0 pt-4 cursor-pointer"
               >
-                <h2 className="font-semibold text-lg leading-tight line-clamp-1 flex justify-between">
+                <h2 className="font-semibold text-lg leading-tight line-clamp-1 flex justify-between text-slate-900 dark:text-white">
                   {board.title}
                 </h2>
 
-                {/* Description */}
                 {board.description && (
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
                     {board.description}
                   </p>
                 )}
@@ -194,19 +199,15 @@ export default function DashboardPage() {
 
               <CardContent
                 onClick={() => navigateToBoard(board)}
-                className="pb-4 pt-3 space-y-2 text-sm text-muted-foreground"
+                className="pb-4 pt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300"
               >
-                {/* Category */}
                 {board.category && (
                   <p className="flex items-center gap-1">
-                    <Tag className="w-4 h-4" />
-                    <span className="capitalize font-medium">
-                      {board.category}
-                    </span>
+                    <Tag className="w-4 h-4" />{" "}
+                    <span className="capitalize font-medium">{board.category}</span>
                   </p>
                 )}
 
-                {/* Priority */}
                 {board.priority && (
                   <span
                     className={`inline-block text-xs px-2 py-1 rounded-md font-medium ${priorityColor(
@@ -217,7 +218,6 @@ export default function DashboardPage() {
                   </span>
                 )}
 
-                {/* Due Date */}
                 {board.dueDate && (
                   <p className="flex items-center gap-1">
                     <CalendarDays className="w-4 h-4" />
@@ -230,7 +230,6 @@ export default function DashboardPage() {
                   </p>
                 )}
 
-                {/* Collaborators */}
                 <p className="flex items-center gap-1 text-xs mt-2">
                   <Users className="w-4 h-4" />
                   {board.collaborators?.length ?? 0} collaborators
@@ -241,5 +240,6 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+    </>
   );
 }
